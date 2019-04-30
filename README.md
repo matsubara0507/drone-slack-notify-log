@@ -1,6 +1,14 @@
 # drone-slack-notify-log
 
+[![Build Status](https://cloud.drone.io/api/badges/matsubara0507/drone-slack-notify-log/status.svg)](https://cloud.drone.io/matsubara0507/drone-slack-notify-log)
+[![GoDoc](https://godoc.org/github.com/matsubara0507/drone-slack-notify-log?status.svg)](https://godoc.org/github.com/matsubara0507/drone-slack-notify-log)
+[![Go Report Card](https://goreportcard.com/badge/github.com/matsubara0507/drone-slack-notify-log)](https://goreportcard.com/report/github.com/matsubara0507/drone-slack-notify-log)
+[![](https://images.microbadger.com/badges/image/matsubara0507/slack-notify-log.svg)](https://microbadger.com/images/matsubara0507/slack-notify-log "Get your own image badge on microbadger.com")
+
+
 Drone plugin for sending Drone step log to Slack as snippet.
+
+use [files.upload slack api](https://api.slack.com/methods/files.upload).
 
 ## Build
 
