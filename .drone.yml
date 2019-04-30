@@ -22,4 +22,4 @@ steps:
       DRONE_HOST: "https://cloud.drone.io"
       PLUGIN_STEP_NUMBER: 2
     commands:
-      - ./drone-git-notify-log
+      - ./drone-slack-notify-log
