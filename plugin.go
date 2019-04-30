@@ -39,13 +39,7 @@ type (
 	Config struct {
 		SlackToken string
 		Channel    string
-		Recipient  string
-		Username   string
 		Template   string
-		ImageURL   string
-		IconURL    string
-		IconEmoji  string
-		LinkNames  bool
 		DroneToken string
 		DroneHost  string
 		StepNum    int

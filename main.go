@@ -31,39 +31,9 @@ func main() {
 			EnvVar: "PLUGIN_CHANNEL",
 		},
 		cli.StringFlag{
-			Name:   "recipient",
-			Usage:  "slack recipient",
-			EnvVar: "PLUGIN_RECIPIENT",
-		},
-		cli.StringFlag{
-			Name:   "username",
-			Usage:  "slack username",
-			EnvVar: "PLUGIN_USERNAME",
-		},
-		cli.StringFlag{
 			Name:   "template",
 			Usage:  "slack template",
 			EnvVar: "PLUGIN_TEMPLATE",
-		},
-		cli.BoolFlag{
-			Name:   "link-names",
-			Usage:  "slack link names",
-			EnvVar: "PLUGIN_LINK_NAMES",
-		},
-		cli.StringFlag{
-			Name:   "image",
-			Usage:  "slack image url",
-			EnvVar: "PLUGIN_IMAGE_URL",
-		},
-		cli.StringFlag{
-			Name:   "icon.url",
-			Usage:  "slack icon url",
-			EnvVar: "PLUGIN_ICON_URL",
-		},
-		cli.StringFlag{
-			Name:   "icon.emoji",
-			Usage:  "slack emoji url",
-			EnvVar: "PLUGIN_ICON_EMOJI",
 		},
 		cli.StringFlag{
 			Name:   "drone_token",
@@ -211,13 +181,7 @@ func run(c *cli.Context) error {
 		Config: Config{
 			SlackToken: c.String("slack_token"),
 			Channel:    c.String("channel"),
-			Recipient:  c.String("recipient"),
-			Username:   c.String("username"),
 			Template:   c.String("template"),
-			ImageURL:   c.String("image"),
-			IconURL:    c.String("icon.url"),
-			IconEmoji:  c.String("icon.emoji"),
-			LinkNames:  c.Bool("link_names"),
 			DroneToken: c.String("drone_token"),
 			DroneHost:  c.String("drone_host"),
 			StepNum:    c.Int("step_num"),
