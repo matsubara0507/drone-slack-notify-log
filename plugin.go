@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"strings"
-
 	"github.com/bluele/slack"
+	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-template-lib/template"
+	"golang.org/x/oauth2"
 )
 
 type (
@@ -29,18 +30,22 @@ type (
 		Link     string
 		Started  int64
 		Created  int64
+		Stage    int
 	}
 
 	Config struct {
-		Webhook   string
-		Channel   string
-		Recipient string
-		Username  string
-		Template  string
-		ImageURL  string
-		IconURL   string
-		IconEmoji string
-		LinkNames bool
+		SlackToken string
+		Channel    string
+		Recipient  string
+		Username   string
+		Template   string
+		ImageURL   string
+		IconURL    string
+		IconEmoji  string
+		LinkNames  bool
+		DroneToken string
+		DroneHost  string
+		StepNum    int
 	}
 
 	Job struct {
@@ -56,40 +61,53 @@ type (
 )
 
 func (p Plugin) Exec() error {
-	attachment := slack.Attachment{
-		Text:       message(p.Repo, p.Build),
-		Fallback:   fallback(p.Repo, p.Build),
-		Color:      color(p.Build),
-		MarkdownIn: []string{"text", "fallback"},
-		ImageURL:   p.Config.ImageURL,
+	config := new(oauth2.Config)
+	client := drone.NewClient(
+		p.Config.DroneHost,
+		config.Client(
+			context.Background(),
+			&oauth2.Token{
+				AccessToken: p.Config.DroneToken,
+			},
+		),
+	)
+
+	logs, err := client.Logs(p.Repo.Owner, p.Repo.Name, p.Build.Number, p.Build.Stage, p.Config.StepNum)
+	if err != nil {
+		return err
 	}
 
-	payload := slack.WebHookPostPayload{}
-	payload.Username = p.Config.Username
-	payload.Attachments = []*slack.Attachment{&attachment}
-	payload.IconUrl = p.Config.IconURL
-	payload.IconEmoji = p.Config.IconEmoji
+	api := slack.New(p.Config.SlackToken)
+	channelName, err := template.RenderTrim(p.Config.Channel, p)
+	if err != nil {
+		return err
+	}
 
-	if p.Config.Recipient != "" {
-		payload.Channel = prepend("@", p.Config.Recipient)
-	} else if p.Config.Channel != "" {
-		payload.Channel = prepend("#", p.Config.Channel)
+	channel, err := fetchChannelId(api, channelName)
+	if err != nil {
+		return err
 	}
-	if p.Config.LinkNames == true {
-		payload.LinkNames = "1"
-	}
+
+	message := message(p.Repo, p.Build)
 	if p.Config.Template != "" {
 		txt, err := template.RenderTrim(p.Config.Template, p)
-
 		if err != nil {
 			return err
 		}
-
-		attachment.Text = txt
+		message = txt
 	}
 
-	client := slack.NewWebHook(p.Config.Webhook)
-	return client.PostMessage(&payload)
+	_, err = api.FilesUpload(&slack.FilesUploadOpt{
+		Content:        content(logs),
+		Filetype:       "text",
+		Filename:       fmt.Sprintf("%s-%s-log.txt", p.Build.Branch, p.Repo.Name),
+		InitialComment: message,
+		Channels:       []string{channel},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func message(repo Repo, build Build) string {
@@ -104,32 +122,21 @@ func message(repo Repo, build Build) string {
 	)
 }
 
-func fallback(repo Repo, build Build) string {
-	return fmt.Sprintf("%s %s/%s#%s (%s) by %s",
-		build.Status,
-		repo.Owner,
-		repo.Name,
-		build.Commit[:8],
-		build.Branch,
-		build.Author,
-	)
+func content(logs []*drone.Line) (content string) {
+	for _, log := range logs {
+		content += log.Message
+	}
+	return
 }
 
-func color(build Build) string {
-	switch build.Status {
-	case "success":
-		return "good"
-	case "failure", "error", "killed":
-		return "danger"
-	default:
-		return "warning"
+func fetchChannelId(c *slack.Slack, name string) (string, error) {
+	channel, err := c.FindChannelByName(name)
+	if err == nil {
+		return channel.Id, nil
 	}
-}
-
-func prepend(prefix, s string) string {
-	if !strings.HasPrefix(s, prefix) {
-		return prefix + s
+	group, err := c.FindGroupByName(name)
+	if err == nil {
+		return group.Id, nil
 	}
-
-	return s
+	return "", err
 }

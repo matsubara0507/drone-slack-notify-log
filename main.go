@@ -21,13 +21,13 @@ func main() {
 	app.Version = fmt.Sprintf("%s+%s", version, build)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "webhook",
-			Usage:  "slack webhook url",
-			EnvVar: "SLACK_WEBHOOK,PLUGIN_WEBHOOK",
+			Name:   "slack_token",
+			Usage:  "slack api token",
+			EnvVar: "SLACK_TOKEN, PLUGIN_TOKEN",
 		},
 		cli.StringFlag{
 			Name:   "channel",
-			Usage:  "slack channel",
+			Usage:  "slack channel with template",
 			EnvVar: "PLUGIN_CHANNEL",
 		},
 		cli.StringFlag{
@@ -64,6 +64,21 @@ func main() {
 			Name:   "icon.emoji",
 			Usage:  "slack emoji url",
 			EnvVar: "PLUGIN_ICON_EMOJI",
+		},
+		cli.StringFlag{
+			Name:   "drone_token",
+			Usage:  "Drone API Token",
+			EnvVar: "DRONE_TOKEN,PLUGIN_DRONE_TOKEN",
+		},
+		cli.StringFlag{
+			Name:   "drone_host",
+			Usage:  "Drone API Host",
+			EnvVar: "DRONE_HOST,PLUGIN_DRONE_HOST",
+		},
+		cli.IntFlag{
+			Name:   "step_num",
+			Usage:  "Drone build step number",
+			EnvVar: "PLUGIN_STEP_NUMBER",
 		},
 		cli.StringFlag{
 			Name:   "repo.owner",
@@ -155,6 +170,11 @@ func main() {
 			Usage:  "job started",
 			EnvVar: "DRONE_JOB_STARTED",
 		},
+		cli.Int64Flag{
+			Name:   "build.stage",
+			Usage:  "build stage number",
+			EnvVar: "DRONE_BUILD_STAGE",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -183,20 +203,24 @@ func run(c *cli.Context) error {
 			Link:     c.String("build.link"),
 			Started:  c.Int64("build.started"),
 			Created:  c.Int64("build.created"),
+			Stage:    c.Int("build.stage"),
 		},
 		Job: Job{
 			Started: c.Int64("job.started"),
 		},
 		Config: Config{
-			Webhook:   c.String("webhook"),
-			Channel:   c.String("channel"),
-			Recipient: c.String("recipient"),
-			Username:  c.String("username"),
-			Template:  c.String("template"),
-			ImageURL:  c.String("image"),
-			IconURL:   c.String("icon.url"),
-			IconEmoji: c.String("icon.emoji"),
-			LinkNames: c.Bool("link_names"),
+			SlackToken: c.String("slack_token"),
+			Channel:    c.String("channel"),
+			Recipient:  c.String("recipient"),
+			Username:   c.String("username"),
+			Template:   c.String("template"),
+			ImageURL:   c.String("image"),
+			IconURL:    c.String("icon.url"),
+			IconEmoji:  c.String("icon.emoji"),
+			LinkNames:  c.Bool("link_names"),
+			DroneToken: c.String("drone_token"),
+			DroneHost:  c.String("drone_host"),
+			StepNum:    c.Int("step_num"),
 		},
 	}
 
