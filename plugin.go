@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/bluele/slack"
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-template-lib/template"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
@@ -77,6 +79,7 @@ func (p Plugin) Exec() error {
 	if err != nil {
 		return errors.Wrapf(err, "can't fetch drone logs: builds/%d/logs/%d/%d", p.Build.Number, p.Build.Stage, p.Config.StepNum)
 	}
+	log.Infof("Success: fetch drone logs (lines num is %d)", len(logs))
 
 	api := slack.New(p.Config.SlackToken)
 	channelName, err := template.RenderTrim(p.Config.Channel, p)
@@ -88,6 +91,7 @@ func (p Plugin) Exec() error {
 	if err != nil {
 		return errors.Wrapf(err, "can't fetch slack channel: %s", channelName)
 	}
+	log.Infof("Success: fetch slack channel id by %s", channelName)
 
 	message := message(p.Repo, p.Build)
 	if p.Config.Template != "" {
@@ -108,6 +112,8 @@ func (p Plugin) Exec() error {
 	if err != nil {
 		return errors.Wrapf(err, "can't upload snippet to slack")
 	}
+	log.Infof("Success: upload snippet to slack with comment: %s", message)
+
 	return nil
 }
 
