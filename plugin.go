@@ -6,6 +6,7 @@ import (
 	"github.com/bluele/slack"
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-template-lib/template"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -74,25 +75,25 @@ func (p Plugin) Exec() error {
 
 	logs, err := client.Logs(p.Repo.Owner, p.Repo.Name, p.Build.Number, p.Build.Stage, p.Config.StepNum)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "can't fetch drone logs: builds/%d/logs/%d/%d", p.Build.Number, p.Build.Stage, p.Config.StepNum)
 	}
 
 	api := slack.New(p.Config.SlackToken)
 	channelName, err := template.RenderTrim(p.Config.Channel, p)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "can't render channel template")
 	}
 
 	channel, err := fetchChannelId(api, channelName)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "can't fetch slack channel: %s", channelName)
 	}
 
 	message := message(p.Repo, p.Build)
 	if p.Config.Template != "" {
 		txt, err := template.RenderTrim(p.Config.Template, p)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "can't render message template")
 		}
 		message = txt
 	}
@@ -105,7 +106,7 @@ func (p Plugin) Exec() error {
 		Channels:       []string{channel},
 	})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "can't upload snippet to slack")
 	}
 	return nil
 }
@@ -123,8 +124,8 @@ func message(repo Repo, build Build) string {
 }
 
 func content(logs []*drone.Line) (content string) {
-	for _, log := range logs {
-		content += log.Message
+	for _, l := range logs {
+		content += l.Message
 	}
 	return
 }
