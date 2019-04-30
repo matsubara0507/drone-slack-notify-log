@@ -23,3 +23,7 @@ steps:
       PLUGIN_STEP_NUMBER: 2
     commands:
       - ./drone-slack-notify-log
+    when:
+      event:
+        exclude:
+          - pull_request
