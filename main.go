@@ -173,7 +173,7 @@ func main() {
 		cli.Int64Flag{
 			Name:   "build.stage",
 			Usage:  "build stage number",
-			EnvVar: "DRONE_BUILD_STAGE",
+			EnvVar: "DRONE_STAGE_NUMBER",
 		},
 	}
 
