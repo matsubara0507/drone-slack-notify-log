@@ -27,7 +27,6 @@ Execute from the working directory:
 docker run --rm \
   -e SLACK_TOKEN=xxx \
   -e PLUGIN_CHANNEL=foo \
-  -e PLUGIN_USERNAME=drone \
   -e PLUGIN_DRONE_TOKEN=yyy \
   -e PLUGIN_DRONE_HOST=https://cloud.drone.io \
   -e PLUGIN_STEP_NUMBER=1 \
@@ -39,7 +38,7 @@ docker run --rm \
   -e DRONE_BUILD_NUMBER=1 \
   -e DRONE_BUILD_STATUS=success \
   -e DRONE_BUILD_LINK=http://github.com/octocat/hello-world \
-  -e DRONE_BUILD_STAGE=1 \
+  -e DRONE_STAGE_NUMBER=1 \
   -e DRONE_TAG=1.0.0 \
   matsubara0507/slack-notify-log
 ```
