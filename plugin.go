@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bluele/slack"
 	"github.com/drone/drone-go/drone"
 	"github.com/drone/drone-template-lib/template"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/slack-go/slack"
 	"golang.org/x/oauth2"
 )
 
@@ -38,7 +38,7 @@ type (
 
 	Config struct {
 		SlackToken string
-		Channel    string
+		Channel    string // Slack Channel ID
 		Template   string
 		DroneToken string
 		DroneHost  string
@@ -76,16 +76,16 @@ func (p Plugin) Exec() error {
 	log.Infof("Success: fetch drone logs (lines num is %d)", len(logs))
 
 	api := slack.New(p.Config.SlackToken)
-	channelName, err := template.RenderTrim(p.Config.Channel, p)
+	channelId, err := template.RenderTrim(p.Config.Channel, p)
 	if err != nil {
 		return errors.Wrapf(err, "can't render channel template")
 	}
 
-	channel, err := fetchChannelId(api, channelName)
+	channel, err := api.GetConversationInfo(channelId, true)
 	if err != nil {
-		return errors.Wrapf(err, "can't fetch slack channel: %s", channelName)
+		return errors.Wrapf(err, "can't fetch slack channel: %s", channelId)
 	}
-	log.Infof("Success: fetch slack channel id by %s", channelName)
+	log.Infof("Success: fetch slack channel id by %s", channel.Name)
 
 	message := message(p.Repo, p.Build)
 	if p.Config.Template != "" {
@@ -96,12 +96,12 @@ func (p Plugin) Exec() error {
 		message = txt
 	}
 
-	_, err = api.FilesUpload(&slack.FilesUploadOpt{
+	_, err = api.UploadFile(slack.FileUploadParameters{
 		Content:        content(logs),
 		Filetype:       "text",
 		Filename:       fmt.Sprintf("%s-%s-log.txt", p.Build.Branch, p.Repo.Name),
 		InitialComment: message,
-		Channels:       []string{channel},
+		Channels:       []string{channelId},
 	})
 	if err != nil {
 		return errors.Wrapf(err, "can't upload snippet to slack")
@@ -128,16 +128,4 @@ func content(logs []*drone.Line) (content string) {
 		content += l.Message
 	}
 	return
-}
-
-func fetchChannelId(c *slack.Slack, name string) (string, error) {
-	channel, err := c.FindChannelByName(name)
-	if err == nil {
-		return channel.Id, nil
-	}
-	group, err := c.FindGroupByName(name)
-	if err == nil {
-		return group.Id, nil
-	}
-	return "", err
 }

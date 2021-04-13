@@ -17,14 +17,14 @@ steps:
   - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -o release/linux/amd64/drone-slack-notify-log
 
 - name: blackbox test
-  image: golang:1.12
+  image: golang:1.15
   commands:
   - ./drone-slack-notify-log
   environment:
     DRONE_HOST: https://cloud.drone.io
     DRONE_TOKEN:
       from_secret: drone_token
-    PLUGIN_CHANNEL: bot-test
+    PLUGIN_CHANNEL: C013L74BY4E
     PLUGIN_STEP_NUMBER: 2
     SLACK_TOKEN:
       from_secret: slack_token
